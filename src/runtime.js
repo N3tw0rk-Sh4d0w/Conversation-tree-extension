@@ -87,5 +87,10 @@ window.CT.runtime = (function (CT) {
     window.setInterval(() => rebuild(false), 1500);
   }
 
-  return { start };
+  function forceRebuild() {
+    lastSig = '';
+    rebuild(true);
+  }
+
+  return { start, forceRebuild };
 })(window.CT);

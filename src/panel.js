@@ -94,6 +94,7 @@ window.CT.panel = (function () {
   let renderRefs = [];
   let seeded = false;
   let rowTimer = null;
+  let reverseOrder = false;
   let state = { items: [], activeRef: null };
 
   function mount(platform) {
@@ -116,6 +117,8 @@ window.CT.panel = (function () {
       '<div class="ct-head">' +
       '<div class="ct-title">Fil de conversation</div>' +
       '<button class="ct-btn" data-act="collapse" title="Réduire tout">Réduire</button>' +
+      '<button class="ct-btn" data-act="loadall" title="Charger tout l\'historique (défilement auto)">Charger tout</button>' +
+      '<button class="ct-btn" data-act="reverse" title="Inverser l\'ordre">↕</button>' +
       '<button class="ct-btn" data-act="settings" title="Réglages">…</button>' +
       '<button class="ct-x" data-act="close" title="Fermer">×</button>' +
       '</div>' +
@@ -168,6 +171,7 @@ window.CT.panel = (function () {
     expanded = new Set();
     renderRefs = [];
     seeded = false;
+    reverseOrder = false;
     state = { items: [], activeRef: null };
   }
 
@@ -206,6 +210,8 @@ window.CT.panel = (function () {
       if (act === 'toggle') setOpen(!open);
       else if (act === 'close') setOpen(false);
       else if (act === 'collapse') collapseAll();
+      else if (act === 'loadall') loadAllHistory();
+      else if (act === 'reverse') toggleReverse();
       else if (act === 'settings') openSettings();
       else if (act === 'mhide') modalEl.hidden = true;
       else if (act === 'msave') saveSettingsFromModal();
@@ -256,6 +262,82 @@ window.CT.panel = (function () {
     updateCollapseButton();
   }
 
+  function toggleReverse() {
+    reverseOrder = !reverseOrder;
+    render(state.items, true);
+    const btn = wrap && wrap.querySelector('[data-act="reverse"]');
+    if (btn) btn.textContent = reverseOrder ? '↑' : '↕';
+    btn && (btn.title = reverseOrder ? 'Plus anciens en premier' : 'Plus récents en premier');
+  }
+
+  function loadAllHistory() {
+    const btn = wrap && wrap.querySelector('[data-act="loadall"]');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Chargement...';
+    }
+    const scrollable = findScrollContainer();
+    if (!scrollable) {
+      if (btn) { btn.disabled = false; btn.textContent = 'Charger tout'; }
+      return;
+    }
+    const originalTop = scrollable.scrollTop;
+    const viewHeight = scrollable.clientHeight || window.innerHeight;
+    let currentTop = scrollable.scrollTop;
+    let lastHeight = scrollable.scrollHeight;
+    let stuck = 0;
+
+    function step() {
+      if (currentTop <= 0) {
+        // Reached top, wait a bit for any final content
+        setTimeout(finish, 800);
+        return;
+      }
+      currentTop = Math.max(0, currentTop - viewHeight * 0.8);
+      scrollable.scrollTop = currentTop;
+
+      // Check if new content loaded (height increased)
+      if (scrollable.scrollHeight > lastHeight) {
+        lastHeight = scrollable.scrollHeight;
+        stuck = 0;
+      } else {
+        stuck++;
+      }
+      if (stuck > 6) { // no new content after 6 steps
+        setTimeout(finish, 500);
+        return;
+      }
+      setTimeout(step, 250);
+    }
+
+    function finish() {
+      // Trigger immediate rebuild to capture all loaded messages
+      if (typeof window.CT !== 'undefined' && window.CT.adapters && window.CT.adapters.clearCache) {
+        window.CT.adapters.clearCache(); // force fresh rebuild with all DOM
+      }
+      if (typeof window.CT !== 'undefined' && window.CT.runtime && window.CT.runtime.forceRebuild) {
+        window.CT.runtime.forceRebuild();
+      }
+      scrollable.scrollTop = originalTop;
+      if (btn) { btn.disabled = false; btn.textContent = 'Charger tout'; }
+    }
+
+    step();
+  }
+
+  function findScrollContainer() {
+    const candidates = [
+      document.scrollingElement,
+      document.body,
+      document.documentElement,
+      ...Array.from(document.querySelectorAll('[style*="overflow"], [class*="scroll"], [class*="virtual"], main, [role="main"]'))
+    ];
+    for (const el of candidates) {
+      if (el && el.scrollHeight > el.clientHeight + 50) return el;
+    }
+    return document.scrollingElement || document.body;
+  }
+
   function itemByKey(key) {
     return state.items.find((i) => i.key === key);
   }
@@ -263,9 +345,25 @@ window.CT.panel = (function () {
   function jumpTo(el, item) {
     let target = el && el.isConnected ? el : null;
     if (!target && item && item.el && item.el.isConnected) target = item.el;
-    if (!target) {
-      const any = state.items.find((i) => i.el && i.el.isConnected);
-      if (any) target = any.el;
+    if (!target && item) {
+      // Try to find element in current DOM by data-ct-seq or text match
+      const key = item.key || item.user?.key;
+      if (key) {
+        const bySeq = document.querySelector('[data-ct-seq="' + key + '"]');
+        if (bySeq && bySeq.isConnected) target = bySeq;
+      }
+      if (!target && item.label) {
+        // Fallback: find by text content match
+        const candidates = document.querySelectorAll('[data-ct-seq]');
+        for (const c of candidates) {
+          if (!c.isConnected) continue;
+          const t = (c.innerText || c.textContent || '').trim().slice(0, 120);
+          if (t === (item.label || '').slice(0, 120) || t.includes(item.label.slice(0, 60))) {
+            target = c;
+            break;
+          }
+        }
+      }
     }
     if (!target) return;
     if (U.scrollToEl(target)) {
@@ -282,7 +380,13 @@ window.CT.panel = (function () {
   }
 
   function collapseAll() {
-    expanded.clear();
+    const hasExpanded = expanded.size > 0;
+    if (hasExpanded) {
+      expanded.clear();
+    } else {
+      // Expand all: add all item keys
+      for (const it of state.items) expanded.add(it.key);
+    }
     render(state.items, true);
     updateCollapseButton();
   }
@@ -413,7 +517,8 @@ window.CT.panel = (function () {
     const parts = [];
     let visible = 0;
     const MAX = 2000;
-    for (const it of items) {
+    const srcItems = reverseOrder ? [...items].reverse() : items;
+    for (const it of srcItems) {
       if (visible >= MAX) break;
       const kids = it.children || [];
       const labelMatch = !q || it.label.toLowerCase().includes(q);
