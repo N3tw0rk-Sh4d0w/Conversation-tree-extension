@@ -1,0 +1,47 @@
+{
+  "manifest_version": 3,
+  "name": "Conversation Tree — Arbre de conversation IA",
+  "short_name": "ConvTree",
+  "version": "0.1.0",
+  "description": "Affiche l'arborescence de vos conversations (grands titres et sous-titres des réponses IA) pour Claude, Gemini, Kimi et autres IA, et vous y redirige d'un clic instantanément.",
+  "permissions": ["storage"],
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_title": "Conversation Tree — Réglages",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/*"],
+      "matches": ["http://*/*", "https://*/*"]
+    }
+  ],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": [
+        "src/core.js",
+        "src/adapters.js",
+        "src/runtime.js",
+        "src/panel.js",
+        "src/content.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Conversation Tree — Réglages</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #ffffff;
+      --fg: #1f2328;
+      --border: #d0d7de;
+      --accent: #1f6feb;
+      --muted: #6e7781;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --fg: #e6edf3;
+        --border: #30363d;
+        --muted: #8b949e;
+      }
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      margin: 0;
+      padding: 32px 20px;
+      max-width: 640px;
+    }
+    h1 { font-size: 20px; margin: 0 0 18px; }
+    h2 { font-size: 14px; margin: 24px 0 8px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+    .field {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px;
+      margin-bottom: 8px;
+    }
+    .field input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); }
+    .field label { flex: 1; font-size: 14px; }
+    .field small { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+    select, button {
+      font-size: 14px; padding: 6px 10px; border-radius: 8px;
+      border: 1px solid var(--border); background: transparent; color: var(--fg);
+    }
+    button.primary {
+      background: var(--accent); color: #fff; border: none; padding: 9px 18px; font-weight: 600;
+      cursor: pointer; margin-top: 20px;
+    }
+    button.primary:hover { filter: brightness(1.08); }
+    #saved { color: #2da44e; font-size: 13px; margin-left: 12px; opacity: 0; transition: opacity .4s; }
+    #saved.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <h1>Conversation Tree — Réglages</h1>
+
+  <h2>Plateformes activées</h2>
+  <div class="field">
+    <input type="checkbox" id="p_claude" />
+    <label>Claude <small>claude.ai / claude.com</small></label>
+  </div>
+  <div class="field">
+    <input type="checkbox" id="p_gemini" />
+    <label>Gemini <small>gemini.google.com / gemini.com</small></label>
+  </div>
+  <div class="field">
+    <input type="checkbox" id="p_kimi" />
+    <label>Kimi <small>kimi.com / kimi.moonshot.cn</small></label>
+  </div>
+  <div class="field">
+    <input type="checkbox" id="p_perplexity" />
+    <label>Perplexity <small>perplexity.ai / perplexity.com</small></label>
+  </div>
+  <div class="field">
+    <input type="checkbox" id="p_copilot" />
+    <label>Copilot <small>copilot.microsoft.com</small></label>
+  </div>
+  <div class="field">
+    <input type="checkbox" id="p_grok" />
+    <label>Grok <small>grok.com</small></label>
+  </div>
+  <div class="field">
+    <input type="checkbox" id="p_generic" />
+    <label>Autres IA (détection générique) <small>tentative automatique sur tout autre site de chat</small></label>
+  </div>
+
+  <h2>Affichage</h2>
+  <div class="field">
+    <label>
+      Niveau de titre minimum dans l&apos;arbre
+      <small>h1 = grands titres uniquement, h3 = sous-sous-titres inclus</small>
+    </label>
+    <select id="minLevel">
+      <option value="1">h1</option>
+      <option value="2">h2</option>
+      <option value="3">h3</option>
+      <option value="4">h4</option>
+      <option value="5">h5</option>
+      <option value="6">h6</option>
+    </select>
+  </div>
+
+  <button class="primary" id="save">Enregistrer</button>
+  <span id="saved">Enregistré ✓</span>
+
+  <script src="options.js"></script>
+</body>
+</html>

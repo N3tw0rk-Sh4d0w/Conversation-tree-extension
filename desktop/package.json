@@ -1,0 +1,13 @@
+{
+  "name": "conversation-tree-desktop",
+  "version": "0.1.0",
+  "description": "Wrapper desktop : navigation par arbre de conversation pour Claude, Gemini, Kimi et autres IA.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "smoke": "electron . --smoke"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0"
+  }
+}

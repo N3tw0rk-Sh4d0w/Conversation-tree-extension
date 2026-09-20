@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f6f8fa;
+      --fg: #1f2328;
+      --border: #d0d7de;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #161b22; --fg: #e6edf3; --border: #30363d; }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg); color: var(--fg); font-size: 13px;
+      display: flex; align-items: center; gap: 8px; padding: 0 10px;
+      border-bottom: 1px solid var(--border); user-select: none;
+    }
+    .btn {
+      width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border);
+      background: transparent; color: inherit; cursor: pointer; display: inline-flex;
+      align-items: center; justify-content: center; font-size: 15px;
+    }
+    .btn:hover { background: rgba(127,127,127,.15); }
+    .btn:disabled { opacity: .35; cursor: default; }
+    .sep { width: 1px; height: 22px; background: var(--border); margin: 0 4px; }
+    #url {
+      flex: 1; min-width: 0; height: 30px; padding: 0 10px; border-radius: 8px;
+      border: 1px solid var(--border); background: transparent; color: inherit; font-size: 12px;
+    }
+    .menu { position: relative; }
+    #platformBtn { width: auto; padding: 0 10px; gap: 6px; }
+    #platformMenu {
+      position: fixed; top: 38px; right: 10px; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 10px; box-shadow: 0 12px 30px rgba(0,0,0,.25); padding: 4px; display: none; z-index: 100;
+    }
+    #platformMenu button {
+      display: block; width: 100%; text-align: left; padding: 8px 12px; border: 0;
+      background: transparent; color: inherit; border-radius: 6px; cursor: pointer; font-size: 13px;
+    }
+    #platformMenu button:hover { background: rgba(127,127,127,.18); }
+  </style>
+</head>
+<body>
+  <button class="btn" id="back" data-act="back" title="Précédent">‹</button>
+  <button class="btn" id="fwd" data-act="forward" title="Suivant">›</button>
+  <button class="btn" data-act="reload" title="Recharger">⟳</button>
+  <button class="btn" data-act="home" title="Accueil">⌂</button>
+  <div class="sep"></div>
+  <input id="url" readonly />
+  <div class="sep"></div>
+  <button class="btn" data-act="devtools" title="Outils de développement">🛠</button>
+  <button class="btn" id="settings" title="Réglages">⚙</button>
+  <button class="btn" data-act="external" title="Ouvrir dans le navigateur">↗</button>
+  <div class="menu">
+    <button class="btn" id="platformBtn" title="Plateforme">▦</button>
+    <div id="platformMenu"></div>
+  </div>
+
+  <script>
+    const PLATFORM_IDS = ['claude', 'gemini', 'kimi'];
+    const LABELS = { claude: 'Claude', gemini: 'Gemini', kimi: 'Kimi' };
+
+    const stateEl = { back: document.getElementById('back'), fwd: document.getElementById('fwd'), url: document.getElementById('url') };
+
+    document.querySelectorAll('[data-act]').forEach((b) => {
+      b.addEventListener('click', () => window.ct.nav(b.dataset.act));
+    });
+    document.getElementById('settings').addEventListener('click', () => window.ct.openSettings());
+
+    const platformBtn = document.getElementById('platformBtn');
+    const menu = document.getElementById('platformMenu');
+    PLATFORM_IDS.forEach((id) => {
+      const b = document.createElement('button');
+      b.textContent = LABELS[id];
+      b.addEventListener('click', () => { window.ct.setPlatform(id); hideMenu(); });
+      menu.appendChild(b);
+    });
+    platformBtn.addEventListener('click', (e) => { e.stopPropagation(); menu.style.display = menu.style.display === 'block' ? 'none' : 'block'; });
+    document.addEventListener('click', hideMenu);
+    function hideMenu() { menu.style.display = 'none'; }
+
+    function render(state) {
+      stateEl.back.disabled = !state.canGoBack;
+      stateEl.fwd.disabled = !state.canGoForward;
+      stateEl.url.value = state.url || '';
+      platformBtn.textContent = LABELS[state.platform] || state.platform;
+    }
+
+    window.ct.onState(render);
+    window.ct.getState().then(render);
+  </script>
+</body>
+</html>

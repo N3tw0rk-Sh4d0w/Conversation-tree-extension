@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #ffffff; --fg: #1f2328; --border: #d0d7de; --muted: #6e7781; --accent: #1f6feb;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #0d1117; --fg: #e6edf3; --border: #30363d; --muted: #8b949e; }
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg); color: var(--fg); margin: 0; padding: 24px 20px;
+    }
+    h1 { font-size: 17px; margin: 0 0 14px; }
+    h2 { font-size: 12px; margin: 18px 0 8px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+    .field {
+      display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+      border: 1px solid var(--border); border-radius: 9px; margin-bottom: 7px;
+    }
+    .field input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--accent); }
+    .field label { flex: 1; font-size: 13px; }
+    .field small { display: block; color: var(--muted); font-size: 11px; margin-top: 1px; }
+    select { font-size: 13px; padding: 5px 8px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: inherit; }
+    .row-actions { margin-top: 18px; display: flex; gap: 10px; }
+    button {
+      padding: 8px 16px; border-radius: 9px; border: 1px solid var(--border);
+      background: transparent; color: inherit; cursor: pointer; font-size: 13px; font-weight: 600;
+    }
+    button.primary { background: var(--accent); color: #fff; border: none; }
+    button.primary:hover { filter: brightness(1.08); }
+    #saved { color: #2da44e; font-size: 12px; opacity: 0; transition: opacity .4s; align-self: center; }
+    #saved.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <h1>Conversation Tree — Réglages</h1>
+
+  <h2>Plateforme par défaut à l&apos;ouverture</h2>
+  <div class="field">
+    <select id="defaultPlatform">
+      <option value="claude">Claude (claude.ai)</option>
+      <option value="gemini">Gemini (gemini.google.com)</option>
+      <option value="kimi">Kimi (kimi.com)</option>
+      <option value="perplexity">Perplexity (perplexity.ai)</option>
+      <option value="copilot">Copilot (copilot.microsoft.com)</option>
+      <option value="grok">Grok (grok.com)</option>
+    </select>
+  </div>
+
+  <h2>Plateformes analysées</h2>
+  <div class="field"><input type="checkbox" id="p_claude" /><label>Claude <small>claude.ai / claude.com</small></label></div>
+  <div class="field"><input type="checkbox" id="p_gemini" /><label>Gemini <small>gemini.google.com / gemini.com</small></label></div>
+  <div class="field"><input type="checkbox" id="p_kimi" /><label>Kimi <small>kimi.com / kimi.moonshot.cn</small></label></div>
+  <div class="field"><input type="checkbox" id="p_perplexity" /><label>Perplexity <small>perplexity.ai / perplexity.com</small></label></div>
+  <div class="field"><input type="checkbox" id="p_copilot" /><label>Copilot <small>copilot.microsoft.com</small></label></div>
+  <div class="field"><input type="checkbox" id="p_grok" /><label>Grok <small>grok.com</small></label></div>
+  <div class="field"><input type="checkbox" id="p_generic" /><label>Autres IA <small>détection générique</small></label></div>
+
+  <h2>Affichage</h2>
+  <div class="field">
+    <label>Niveau de titre minimum dans l&apos;arbre</label>
+    <select id="minLevel">
+      <option value="1">h1</option><option value="2">h2</option><option value="3">h3</option>
+      <option value="4">h4</option><option value="5">h5</option><option value="6">h6</option>
+    </select>
+  </div>
+
+  <div class="row-actions">
+    <button class="primary" id="save">Enregistrer et appliquer</button>
+    <span id="saved">Enregistré ✓</span>
+  </div>
+
+  <script>
+    const IDs = ['claude', 'gemini', 'kimi', 'perplexity', 'copilot', 'grok', 'generic'];
+    const savedEl = document.getElementById('saved');
+
+    window.ct.getSettings().then((s) => {
+      document.getElementById('defaultPlatform').value = s.defaultPlatform || 'claude';
+      const platforms = s.platforms || {};
+      for (const id of IDs) document.getElementById('p_' + id).checked = platforms[id] !== false;
+      document.getElementById('minLevel').value = String(s.minLevel || 1);
+    });
+
+    document.getElementById('save').addEventListener('click', () => {
+      const platforms = {};
+      for (const id of IDs) platforms[id] = document.getElementById('p_' + id).checked;
+      window.ct.saveSettings({
+        defaultPlatform: document.getElementById('defaultPlatform').value,
+        platforms,
+        minLevel: parseInt(document.getElementById('minLevel').value, 10) || 1
+      });
+      savedEl.classList.add('show');
+      setTimeout(() => savedEl.classList.remove('show'), 1800);
+    });
+  </script>
+</body>
+</html>
