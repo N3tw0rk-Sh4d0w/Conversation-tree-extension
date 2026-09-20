@@ -2,4 +2,6 @@ node_modules/
 dist/
 desktop/node_modules/
 *.log
+
+## Le fichier contexte.md n'est pas nécessaire sur le dépôt 
 contexte.md
